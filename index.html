@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AttendEase — Web Technology</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0a14;
+  --surface: #12121f;
+  --surface2: #1a1a2e;
+  --accent: #6c63ff;
+  --accent2: #ff6584;
+  --accent3: #43e97b;
+  --accent4: #f7971e;
+  --text: #f0f0ff;
+  --muted: #8080a0;
+  --border: rgba(108,99,255,0.2);
+  --card: rgba(26,26,46,0.8);
+  --present: #43e97b;
+  --absent: #ff6584;
+  --late: #f7971e;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ANIMATED BG */
+.bg-orbs {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.orb {
+  position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18;
+  animation: orbFloat 12s ease-in-out infinite;
+}
+.orb1 { width:400px; height:400px; background:#6c63ff; top:-100px; left:-100px; animation-delay:0s; }
+.orb2 { width:300px; height:300px; background:#ff6584; bottom:-50px; right:-50px; animation-delay:4s; }
+.orb3 { width:250px; height:250px; background:#43e97b; top:40%; left:60%; animation-delay:8s; }
+
+@keyframes orbFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(30px,-20px) scale(1.05); }
+  66% { transform: translate(-20px,30px) scale(0.95); }
+}
+
+/* PARTICLES */
+canvas#particles { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.4; }
+
+/* LAYOUT */
+.app { position:relative; z-index:1; display:grid; grid-template-columns:260px 1fr; min-height:100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  background: rgba(18,18,31,0.9);
+  border-right: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  padding: 2rem 1.5rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  position: sticky; top: 0; height: 100vh;
+  animation: slideInLeft 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity:0; }
+  to { transform: translateX(0); opacity:1; }
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.logo span { display:block; font-size:0.7rem; font-weight:400; color:var(--muted); -webkit-text-fill-color: var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--muted);
+  transition: all 0.25s;
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+.nav-item::before {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  opacity:0; transition: opacity 0.25s;
+}
+.nav-item .nav-icon { font-size:1.1rem; position:relative; z-index:1; }
+.nav-item .nav-label { position:relative; z-index:1; font-weight:500; }
+.nav-item:hover { color:var(--text); border-color:var(--border); }
+.nav-item.active { color:var(--text); border-color:rgba(108,99,255,0.4); }
+.nav-item.active::before { opacity:0.15; }
+.nav-item.active .nav-icon { filter: drop-shadow(0 0 8px var(--accent)); }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* MAIN */
+.main {
+  padding: 2rem 2.5rem;
+  animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(30px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* PAGE HEADER */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+}
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem; font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.page-title .highlight {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.page-sub { color: var(--muted); font-size:0.875rem; margin-top:4px; }
+
+/* SECTIONS */
+.section { display:none; animation: sectionIn 0.4s cubic-bezier(0.16,1,0.3,1); }
+.section.active { display:block; }
+@keyframes sectionIn {
+  from { opacity:0; transform:translateY(16px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* METRIC CARDS */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem; margin-bottom: 2rem;
+}
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(10px);
+  position: relative; overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: cardPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.metric-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+.metric-card::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+}
+.metric-card.c-present::after { background: var(--present); }
+.metric-card.c-absent::after { background: var(--absent); }
+.metric-card.c-late::after { background: var(--late); }
+.metric-card.c-total::after { background: var(--accent); }
+
+@keyframes cardPop {
+  from { opacity:0; transform:scale(0.9); }
+  to { opacity:1; transform:scale(1); }
+}
+.metric-card:nth-child(1) { animation-delay:0.05s; }
+.metric-card:nth-child(2) { animation-delay:0.1s; }
+.metric-card:nth-child(3) { animation-delay:0.15s; }
+.metric-card:nth-child(4) { animation-delay:0.2s; }
+
+.metric-label { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.metric-value { font-family:'Syne',sans-serif; font-size:2.5rem; font-weight:800; line-height:1; }
+.metric-value.present { color:var(--present); }
+.metric-value.absent { color:var(--absent); }
+.metric-value.late { color:var(--late); }
+.metric-value.total { color:var(--accent); }
+
+/* CONTROLS BAR */
+.controls-bar {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+.controls-bar label { font-size:0.8rem; color:var(--muted); white-space:nowrap; }
+
+input[type="date"], input[type="text"], select, input[type="email"] {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 9px 14px;
+  font-size: 0.875rem;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+}
+select option { background: var(--surface2); }
+
+/* BUTTONS */
+.btn {
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 6px;
+  position: relative; overflow: hidden;
+}
+.btn::after {
+  content:''; position:absolute; inset:0;
+  background:rgba(255,255,255,0.08);
+  opacity:0; transition:opacity 0.2s;
+}
+.btn:hover::after { opacity:1; }
+.btn:active { transform:scale(0.97); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #8b83ff);
+  border-color: transparent;
+  box-shadow: 0 4px 20px rgba(108,99,255,0.4);
+}
+.btn-primary:hover { box-shadow: 0 8px 30px rgba(108,99,255,0.6); transform:translateY(-1px); }
+
+.btn-success {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  border-color: transparent; color: #0a2e1a;
+}
+.btn-danger {
+  background: linear-gradient(135deg, var(--absent), #f093fb);
+  border-color: transparent; color: #2e0a12;
+}
+.btn-warning {
+  background: linear-gradient(135deg, var(--late), #f5af19);
+  border-color: transparent; color: #2e1a0a;
+}
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+/* STUDENT GRID */
+.student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.student-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.25s;
+  animation: cardPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  position: relative; overflow: hidden;
+}
+.student-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; bottom:0;
+  background: linear-gradient(135deg, rgba(108,99,255,0.05), transparent);
+  opacity:0; transition:opacity 0.3s;
+}
+.student-card:hover { transform:translateY(-4px); box-shadow:0 20px 40px rgba(0,0,0,0.3); border-color:rgba(108,99,255,0.4); }
+.student-card:hover::before { opacity:1; }
+
+.student-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem;
+  margin-bottom: 10px;
+  position: relative; z-index:1;
+}
+.student-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; position:relative;z-index:1; }
+.student-roll { font-size: 0.78rem; color: var(--muted); margin-bottom: 12px; position:relative;z-index:1; }
+
+.att-btns { display:flex; gap:6px; position:relative;z-index:1; }
+.att-btn {
+  flex:1; padding:8px 4px; font-size:0.75rem; font-weight:600;
+  border-radius: 8px; border:1px solid rgba(255,255,255,0.1);
+  cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+  background: rgba(255,255,255,0.05); color:var(--muted);
+  text-align:center;
+}
+.att-btn:hover { transform:scale(1.05); }
+.att-btn.active-present { background:rgba(67,233,123,0.2); color:var(--present); border-color:var(--present); box-shadow:0 0 12px rgba(67,233,123,0.3); }
+.att-btn.active-absent  { background:rgba(255,101,132,0.2); color:var(--absent);  border-color:var(--absent);  box-shadow:0 0 12px rgba(255,101,132,0.3); }
+.att-btn.active-late    { background:rgba(247,151,30,0.2);  color:var(--late);    border-color:var(--late);    box-shadow:0 0 12px rgba(247,151,30,0.3); }
+
+/* TABLE */
+.table-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+table { width:100%; border-collapse:collapse; }
+th {
+  text-align:left; padding:14px 16px;
+  font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;
+  color:var(--muted); font-weight:600;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding:13px 16px; font-size:0.875rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(108,99,255,0.05); }
+
+/* BADGES */
+.badge {
+  display:inline-block; padding:3px 10px;
+  border-radius:99px; font-size:0.72rem; font-weight:600; letter-spacing:0.5px;
+}
+.badge-present { background:rgba(67,233,123,0.15); color:var(--present); border:1px solid rgba(67,233,123,0.3); }
+.badge-absent  { background:rgba(255,101,132,0.15); color:var(--absent);  border:1px solid rgba(255,101,132,0.3); }
+.badge-late    { background:rgba(247,151,30,0.15);  color:var(--late);    border:1px solid rgba(247,151,30,0.3); }
+
+/* ADD STUDENT FORM */
+.add-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+  display:none;
+  animation: sectionIn 0.3s ease;
+}
+.add-form.open { display:block; }
+.form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; align-items:end; }
+
+/* PROGRESS BAR */
+.progress-wrap { background:rgba(255,255,255,0.08); border-radius:99px; height:8px; overflow:hidden; width:120px; }
+.progress-bar { height:100%; border-radius:99px; transition:width 0.5s ease; }
+.progress-high { background:linear-gradient(90deg,#43e97b,#38f9d7); }
+.progress-mid  { background:linear-gradient(90deg,#f7971e,#f5af19); }
+.progress-low  { background:linear-gradient(90deg,#ff6584,#f093fb); }
+
+/* FIREBASE CONFIG MODAL */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(10px); z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 520px; width:90%;
+  animation: modalPop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalPop { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }
+.modal h2 { font-family:'Syne',sans-serif; font-size:1.5rem; margin-bottom:0.5rem; }
+.modal p { color:var(--muted); font-size:0.875rem; line-height:1.6; margin-bottom:1.25rem; }
+.modal .field { margin-bottom:12px; }
+.modal .field label { display:block; font-size:0.8rem; color:var(--muted); margin-bottom:5px; }
+.modal .field input { width:100%; }
+.modal-footer { display:flex; gap:10px; margin-top:1.5rem; }
+
+/* TOAST */
+.toast-container { position:fixed; bottom:24px; right:24px; z-index:2000; display:flex; flex-direction:column; gap:8px; }
+.toast {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
+  font-size:0.875rem;
+  backdrop-filter:blur(20px);
+  display:flex; align-items:center; gap:10px;
+  animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  min-width:220px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+@keyframes toastIn { from{opacity:0;transform:translateX(50px)} to{opacity:1;transform:translateX(0)} }
+.toast-icon { font-size:1.1rem; }
+.toast-out { animation: toastOut 0.3s ease forwards; }
+@keyframes toastOut { to{opacity:0;transform:translateX(50px)} }
+
+/* STATUS INDICATOR */
+.status-dot {
+  width:8px; height:8px; border-radius:50%;
+  display:inline-block; margin-right:6px;
+}
+.status-dot.online { background:var(--present); box-shadow:0 0 8px var(--present); animation: pulse 2s infinite; }
+.status-dot.offline { background:var(--absent); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* SPINNER */
+.spinner {
+  width:20px; height:20px; border:2px solid var(--border);
+  border-top-color:var(--accent); border-radius:50%;
+  animation:spin 0.6s linear infinite; display:inline-block;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align:center; padding:3rem 1rem; color:var(--muted);
+}
+.empty-state .empty-icon { font-size:3rem; margin-bottom:1rem; opacity:0.5; }
+.empty-state p { font-size:0.9rem; }
+
+/* AVATAR COLORS */
+.av-0 { background:rgba(108,99,255,0.2); color:#8b83ff; }
+.av-1 { background:rgba(255,101,132,0.2); color:#ff8fab; }
+.av-2 { background:rgba(67,233,123,0.2); color:#6bffaa; }
+.av-3 { background:rgba(247,151,30,0.2); color:#ffc06b; }
+.av-4 { background:rgba(56,249,215,0.2); color:#38f9d7; }
+.av-5 { background:rgba(240,93,251,0.2); color:#f093fb; }
+
+/* REPORT GRID CELL */
+.rcell {
+  width:28px; height:28px; border-radius:6px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:0.7rem; font-weight:700;
+}
+.rcell-P { background:rgba(67,233,123,0.2); color:var(--present); }
+.rcell-A { background:rgba(255,101,132,0.2); color:var(--absent); }
+.rcell-L { background:rgba(247,151,30,0.2); color:var(--late); }
+.rcell-x { background:rgba(255,255,255,0.05); color:var(--muted); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(108,99,255,0.3); border-radius:99px; }
+</style>
+</head>
+<body>
+
+<!-- FIREBASE CONFIG MODAL -->
+<div class="modal-overlay" id="config-modal">
+  <div class="modal">
+    <h2>🔥 Firebase Setup</h2>
+    <p>Connect your Firebase project to enable cloud data storage. Your attendance data will be saved in real-time and accessible from any device, anywhere.</p>
+    <p style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:10px;padding:10px 14px;margin-bottom:1.25rem;">
+      <strong style="color:var(--accent)">How to get these values:</strong><br>
+      1. Go to <strong>console.firebase.google.com</strong><br>
+      2. Create a project → Add Web App<br>
+      3. Copy the config values below
+    </p>
+    <div class="field"><label>API Key</label><input type="text" id="cfg-apiKey" placeholder="AIzaSy..."/></div>
+    <div class="field"><label>Auth Domain</label><input type="text" id="cfg-authDomain" placeholder="yourproject.firebaseapp.com"/></div>
+    <div class="field"><label>Project ID</label><input type="text" id="cfg-projectId" placeholder="yourproject-id"/></div>
+    <div class="field"><label>Storage Bucket</label><input type="text" id="cfg-storageBucket" placeholder="yourproject.appspot.com"/></div>
+    <div class="field"><label>Messaging Sender ID</label><input type="text" id="cfg-messagingSenderId" placeholder="123456789"/></div>
+    <div class="field"><label>App ID</label><input type="text" id="cfg-appId" placeholder="1:123456:web:abc123"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="initFirebase()">🚀 Connect Firebase</button>
+      <button class="btn" onclick="useLocalMode()">Use Local Mode (Demo)</button>
+    </div>
+  </div>
+</div>
+
+<!-- CANVAS PARTICLES -->
+<canvas id="particles"></canvas>
+
+<!-- BG ORBS -->
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      AttendEase
+      <span>Web Technology — TYIT</span>
+    </div>
+
+    <nav>
+      <div class="nav-item active" onclick="switchTab('mark')">
+        <span class="nav-icon">✏️</span>
+        <span class="nav-label">Mark Attendance</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('records')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Records</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('students')">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Students</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('report')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Report</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="margin-bottom:8px;">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text" style="font-size:0.78rem;">Connecting...</span>
+      </div>
+      <div style="color:var(--muted);font-size:0.72rem;">
+        Web Technology<br>
+        CO1 · CO2 · CO3 · CO4<br>
+        Semester VI
+      </div>
+      <button class="btn btn-sm" style="margin-top:12px;width:100%;font-size:0.75rem;" onclick="document.getElementById('config-modal').style.display='flex'">⚙️ Firebase Config</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- MARK ATTENDANCE -->
+    <div class="section active" id="tab-mark">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Mark <span class="highlight">Attendance</span></div>
+          <div class="page-sub">Record today's session attendance in real-time</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveSession()">💾 Save Session</button>
+      </div>
+
+      <div class="controls-bar">
+        <label>Date</label>
+        <input type="date" id="att-date" style="max-width:160px;"/>
+        <label>Subject</label>
+        <select id="att-subject">
+          <option>Internet Architecture</option>
+          <option>HTML &amp; CSS</option>
+          <option>JavaScript &amp; DOM</option>
+          <option>PHP &amp; Server-Side</option>
+        </select>
+        <button class="btn btn-success btn-sm" onclick="markAll('present')">✅ All Present</button>
+        <button class="btn btn-danger btn-sm" onclick="markAll('absent')">❌ All Absent</button>
+        <button class="btn btn-sm" onclick="clearMarks()">🔄 Reset</button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card c-present">
+          <div class="metric-label">Present</div>
+          <div class="metric-value present" id="m-present">0</div>
+        </div>
+        <div class="metric-card c-absent">
+          <div class="metric-label">Absent</div>
+          <div class="metric-value absent" id="m-absent">0</div>
+        </div>
+        <div class="metric-card c-late">
+          <div class="metric-label">Late</div>
+          <div class="metric-value late" id="m-late">0</div>
+        </div>
+        <div class="metric-card c-total">
+          <div class="metric-label">Total Students</div>
+          <div class="metric-value total" id="m-total">0</div>
+        </div>
+      </div>
+
+      <div class="student-grid" id="mark-grid"></div>
+    </div>
+
+    <!-- RECORDS -->
+    <div class="section" id="tab-records">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Attendance <span class="highlight">Records</span></div>
+          <div class="page-sub">Browse all saved sessions and filter by date or subject</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="clearAllSessions()">🗑️ Clear All</button>
+      </div>
+
+      <div class="controls-bar">
+        <label>Date</label>
+        <input type="date" id="filter-date" style="max-width:160px;"/>
+        <label>Subject</label>
+        <select id="filter-subject">
+          <option value="">All Subjects</option>
+          <option>Internet Architecture</option>
+          <option>HTML &amp; CSS</option>
+          <option>JavaScript &amp; DOM</option>
+          <option>PHP &amp; Server-Side</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="renderRecords()">🔍 Filter</button>
+        <button class="btn btn-sm" onclick="document.getElementById('filter-date').value='';document.getElementById('filter-subject').value='';renderRecords()">Clear Filter</button>
+      </div>
+
+      <div id="records-wrap"></div>
+    </div>
+
+    <!-- STUDENTS -->
+    <div class="section" id="tab-students">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Student <span class="highlight">Directory</span></div>
+          <div class="page-sub">Manage enrolled students and track their overall attendance</div>
+        </div>
+        <button class="btn btn-primary" onclick="toggleAddForm()">➕ Add Student</button>
+      </div>
+
+      <div class="add-form" id="add-form">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:1rem;font-size:1.1rem;">New Student</div>
+        <div class="form-grid">
+          <div><label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px;">Roll No</label><input type="text" id="new-roll" placeholder="WT001"/></div>
+          <div><label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px;">Full Name</label><input type="text" id="new-name" placeholder="Aakash Mehta"/></div>
+          <div><label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px;">Division</label><input type="text" id="new-div" placeholder="A"/></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <button class="btn btn-primary" onclick="addStudent()">Add</button>
+            <button class="btn" onclick="toggleAddForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Roll No</th><th>Name</th><th>Div</th><th>Sessions</th><th>Attendance %</th><th>Action</th></tr></thead>
+          <tbody id="students-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div class="section" id="tab-report">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Attendance <span class="highlight">Report</span></div>
+          <div class="page-sub">Detailed session-wise breakdown for every student</div>
+        </div>
+        <button class="btn btn-primary" onclick="renderReport()">📊 Generate</button>
+      </div>
+
+      <div class="controls-bar">
+        <label>Student</label>
+        <select id="report-student"><option value="">All Students</option></select>
+        <label>Subject</label>
+        <select id="report-subject">
+          <option value="">All Subjects</option>
+          <option>Internet Architecture</option>
+          <option>HTML &amp; CSS</option>
+          <option>JavaScript &amp; DOM</option>
+          <option>PHP &amp; Server-Side</option>
+        </select>
+      </div>
+
+      <div id="report-content"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+window._firebase = { initializeApp, getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot };
+window._fbReady = true;
+</script>
+
+<script>
+// ── PARTICLES ──────────────────────────────────────────────
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resizeCanvas() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+for (let i=0; i<60; i++) {
+  particles.push({
+    x: Math.random()*window.innerWidth,
+    y: Math.random()*window.innerHeight,
+    r: Math.random()*2+0.5,
+    vx: (Math.random()-0.5)*0.4,
+    vy: (Math.random()-0.5)*0.4,
+    alpha: Math.random()*0.5+0.2,
+    color: ['#6c63ff','#ff6584','#43e97b','#f7971e'][Math.floor(Math.random()*4)]
+  });
+}
+
+function animParticles() {
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x<0) p.x=W; if (p.x>W) p.x=0;
+    if (p.y<0) p.y=H; if (p.y>H) p.y=0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.alpha;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+// ── STATE ──────────────────────────────────────────────────
+let db = null;
+let isFirebase = false;
+let students = [];
+let sessions = [];
+let currentMarks = {};
+
+const COLORS = ['av-0','av-1','av-2','av-3','av-4','av-5'];
+const SUBJECTS = ['Internet Architecture','HTML & CSS','JavaScript & DOM','PHP & Server-Side'];
+
+// ── TOAST ──────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const icons = { info:'💬', success:'✅', error:'❌', warning:'⚠️' };
+  const colors = { info:'rgba(108,99,255,0.3)', success:'rgba(67,233,123,0.3)', error:'rgba(255,101,132,0.3)', warning:'rgba(247,151,30,0.3)' };
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.borderColor = colors[type];
+  el.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => { el.classList.add('toast-out'); setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ── STATUS ─────────────────────────────────────────────────
+function setStatus(online) {
+  document.getElementById('status-dot').className = 'status-dot ' + (online?'online':'offline');
+  document.getElementById('status-text').textContent = online ? (isFirebase?'Firebase Connected':'Local Mode') : 'Offline';
+}
+
+// ── LOCAL STORAGE FALLBACK ─────────────────────────────────
+function lsLoad(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch { return d; } }
+function lsSave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+// ── FIREBASE INIT ──────────────────────────────────────────
+window.initFirebase = async function() {
+  const cfg = {
+    apiKey: document.getElementById('cfg-apiKey').value.trim(),
+    authDomain: document.getElementById('cfg-authDomain').value.trim(),
+    projectId: document.getElementById('cfg-projectId').value.trim(),
+    storageBucket: document.getElementById('cfg-storageBucket').value.trim(),
+    messagingSenderId: document.getElementById('cfg-messagingSenderId').value.trim(),
+    appId: document.getElementById('cfg-appId').value.trim(),
+  };
+  if (!cfg.apiKey || !cfg.projectId) { toast('Please fill in API Key and Project ID', 'error'); return; }
+  try {
+    const { initializeApp, getFirestore } = window._firebase;
+    const app = initializeApp(cfg);
+    db = getFirestore(app);
+    isFirebase = true;
+    lsSave('fb_config', cfg);
+    document.getElementById('config-modal').style.display = 'none';
+    setStatus(true);
+    toast('Firebase connected! 🔥', 'success');
+    await loadData();
+    listenRealtime();
+  } catch(e) {
+    toast('Firebase error: ' + e.message, 'error');
+  }
+};
+
+window.useLocalMode = function() {
+  document.getElementById('config-modal').style.display = 'none';
+  setStatus(true);
+  toast('Running in local mode — data saved in browser', 'warning');
+  loadLocalData();
+};
+
+// ── LOAD DATA ──────────────────────────────────────────────
+async function loadData() {
+  if (!isFirebase) { loadLocalData(); return; }
+  try {
+    const { collection, getDocs } = window._firebase;
+    const [sSnap, sessSnap] = await Promise.all([
+      getDocs(collection(db, 'students')),
+      getDocs(collection(db, 'sessions'))
+    ]);
+    students = sSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    sessions = sessSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    if (!students.length) await seedDefaults();
+    refreshAll();
+  } catch(e) {
+    toast('Load error: ' + e.message, 'error');
+    loadLocalData();
+  }
+}
+
+function loadLocalData() {
+  students = lsLoad('att_students', getDefaultStudents());
+  sessions = lsLoad('att_sessions', []);
+  refreshAll();
+}
+
+function getDefaultStudents() {
+  return [
+    { id:'s1', roll:'WT001', name:'Aakash Mehta', div:'A' },
+    { id:'s2', roll:'WT002', name:'Priya Sharma', div:'A' },
+    { id:'s3', roll:'WT003', name:'Rohan Desai', div:'B' },
+    { id:'s4', roll:'WT004', name:'Sneha Patil', div:'B' },
+    { id:'s5', roll:'WT005', name:'Aryan Kulkarni', div:'A' },
+    { id:'s6', roll:'WT006', name:'Divya Joshi', div:'B' },
+  ];
+}
+
+async function seedDefaults() {
+  const defaults = getDefaultStudents();
+  for (const s of defaults) await saveStudentDB(s);
+  students = defaults;
+}
+
+// ── REALTIME LISTENER ──────────────────────────────────────
+function listenRealtime() {
+  if (!isFirebase) return;
+  const { collection, onSnapshot } = window._firebase;
+  onSnapshot(collection(db, 'sessions'), snap => {
+    sessions = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    if (document.getElementById('tab-records').classList.contains('active')) renderRecords();
+    if (document.getElementById('tab-report').classList.contains('active')) renderReport();
+    if (document.getElementById('tab-students').classList.contains('active')) renderStudents();
+  });
+  onSnapshot(collection(db, 'students'), snap => {
+    students = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    refreshAll();
+  });
+}
+
+// ── SAVE TO DB ─────────────────────────────────────────────
+async function saveStudentDB(s) {
+  if (isFirebase) {
+    const { collection, doc, setDoc } = window._firebase;
+    await setDoc(doc(collection(db,'students'), s.id), s);
+  }
+  lsSave('att_students', students);
+}
+
+async function saveSessionDB(sess) {
+  if (isFirebase) {
+    const { collection, doc, setDoc } = window._firebase;
+    await setDoc(doc(collection(db,'sessions'), sess.id), sess);
+  }
+  lsSave('att_sessions', sessions);
+}
+
+async function deleteStudentDB(id) {
+  if (isFirebase) {
+    const { collection, doc, deleteDoc } = window._firebase;
+    await deleteDoc(doc(collection(db,'students'), id));
+  }
+}
+
+async function deleteSessionDB(id) {
+  if (isFirebase) {
+    const { collection, doc, deleteDoc } = window._firebase;
+    await deleteDoc(doc(collection(db,'sessions'), id));
+  }
+}
+
+// ── INIT DATE ──────────────────────────────────────────────
+function initDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('att-date').value = today;
+  document.getElementById('filter-date').value = today;
+}
+
+// ── TAB SWITCH ─────────────────────────────────────────────
+window.switchTab = function(tab) {
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('active', ['mark','records','students','report'][i] === tab);
+  });
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab==='mark') renderMarkGrid();
+  if (tab==='records') renderRecords();
+  if (tab==='students') renderStudents();
+  if (tab==='report') renderReport();
+};
+
+// ── REFRESH ALL ────────────────────────────────────────────
+function refreshAll() {
+  renderMarkGrid();
+  renderStudents();
+  updateReportSelect();
+}
+
+// ── MARK GRID ──────────────────────────────────────────────
+function renderMarkGrid() {
+  const grid = document.getElementById('mark-grid');
+  if (!students.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👥</div><p>No students found. Add students in the Students tab.</p></div>`;
+    updateMetrics(); return;
+  }
+  grid.innerHTML = '';
+  students.forEach((s, i) => {
+    const av = COLORS[i % COLORS.length];
+    const initials = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const status = currentMarks[s.id] || '';
+    const card = document.createElement('div');
+    card.className = 'student-card';
+    card.style.animationDelay = (i * 0.04) + 's';
+    card.innerHTML = `
+      <div class="student-avatar ${av}">${initials}</div>
+      <div class="student-name">${s.name}</div>
+      <div class="student-roll">${s.roll} · Div ${s.div}</div>
+      <div class="att-btns">
+        <button class="att-btn ${status==='present'?'active-present':''}" onclick="setMark('${s.id}','present')">✅ P</button>
+        <button class="att-btn ${status==='late'?'active-late':''}" onclick="setMark('${s.id}','late')">⏰ L</button>
+        <button class="att-btn ${status==='absent'?'active-absent':''}" onclick="setMark('${s.id}','absent')">❌ A</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  updateMetrics();
+}
+
+window.setMark = function(id, status) {
+  currentMarks[id] = status;
+  renderMarkGrid();
+};
+
+window.markAll = function(status) {
+  students.forEach(s => currentMarks[s.id] = status);
+  renderMarkGrid();
+};
+
+window.clearMarks = function() {
+  currentMarks = {};
+  renderMarkGrid();
+};
+
+function updateMetrics() {
+  const vals = Object.values(currentMarks);
+  document.getElementById('m-present').textContent = vals.filter(v=>v==='present').length;
+  document.getElementById('m-absent').textContent = vals.filter(v=>v==='absent').length;
+  document.getElementById('m-late').textContent = vals.filter(v=>v==='late').length;
+  document.getElementById('m-total').textContent = students.length;
+}
+
+// ── SAVE SESSION ───────────────────────────────────────────
+window.saveSession = async function() {
+  const date = document.getElementById('att-date').value;
+  const subject = document.getElementById('att-subject').value;
+  if (!date) { toast('Please select a date', 'error'); return; }
+  if (!students.length) { toast('No students to record', 'warning'); return; }
+
+  const records = students.map(s => ({
+    studentId: s.id, roll: s.roll, name: s.name,
+    status: currentMarks[s.id] || 'absent'
+  }));
+
+  const sessId = date + '_' + subject.replace(/[^a-zA-Z0-9]/g,'_');
+  const sess = { id:sessId, date, subject, records, savedAt: new Date().toISOString() };
+
+  const existIdx = sessions.findIndex(s => s.id === sessId);
+  if (existIdx >= 0) sessions[existIdx] = sess; else sessions.push(sess);
+
+  try {
+    await saveSessionDB(sess);
+    currentMarks = {};
+    renderMarkGrid();
+    toast('Attendance saved for ' + date + '! 🎉', 'success');
+  } catch(e) {
+    toast('Save failed: ' + e.message, 'error');
+  }
+};
+
+// ── RECORDS ────────────────────────────────────────────────
+window.renderRecords = function() {
+  const fd = document.getElementById('filter-date').value;
+  const fs = document.getElementById('filter-subject').value;
+  let filtered = sessions.filter(s => (!fd || s.date===fd) && (!fs || s.subject===fs));
+  filtered.sort((a,b) => b.date.localeCompare(a.date));
+  const wrap = document.getElementById('records-wrap');
+
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No records found for the selected filters.</p></div>`;
+    return;
+  }
+
+  let html = '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Subject</th><th>Student</th><th>Roll</th><th>Status</th></tr></thead><tbody>';
+  filtered.forEach(sess => {
+    sess.records.forEach(r => {
+      html += `<tr>
+        <td style="font-weight:500">${sess.date}</td>
+        <td style="color:var(--muted)">${sess.subject}</td>
+        <td>${r.name}</td>
+        <td style="color:var(--muted)">${r.roll}</td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>
+      </tr>`;
+    });
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+};
+
+window.clearAllSessions = async function() {
+  if (!confirm('Delete ALL attendance records? This cannot be undone.')) return;
+  try {
+    for (const s of sessions) await deleteSessionDB(s.id);
+    sessions = [];
+    lsSave('att_sessions', []);
+    renderRecords();
+    toast('All records cleared', 'warning');
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+};
+
+// ── STUDENTS ───────────────────────────────────────────────
+function renderStudents() {
+  const tbody = document.getElementById('students-tbody');
+  updateReportSelect();
+
+  if (!students.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>No students added yet.</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  students.forEach((s, i) => {
+    const allRec = sessions.flatMap(ss => ss.records.filter(r => r.studentId===s.id || r.roll===s.roll));
+    const pct = allRec.length ? Math.round((allRec.filter(r=>r.status==='present'||r.status==='late').length / allRec.length)*100) : null;
+    const barClass = pct===null?'':pct>=75?'progress-high':pct>=50?'progress-mid':'progress-low';
+    const av = COLORS[i % COLORS.length];
+    const initials = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-weight:600">${s.roll}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="student-avatar ${av}" style="width:34px;height:34px;font-size:0.75rem;margin:0;">${initials}</div>
+          ${s.name}
+        </div>
+      </td>
+      <td style="color:var(--muted)">${s.div}</td>
+      <td>${allRec.length}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="progress-wrap"><div class="progress-bar ${barClass}" style="width:${pct||0}%"></div></div>
+          <span style="font-size:0.8rem;min-width:36px;font-weight:600;color:${pct===null?'var(--muted)':pct>=75?'var(--present)':pct>=50?'var(--late)':'var(--absent)'}">${pct!==null?pct+'%':'—'}</span>
+        </div>
+      </td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="removeStudent('${s.id}')">Remove</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+window.toggleAddForm = function() {
+  document.getElementById('add-form').classList.toggle('open');
+};
+
+window.addStudent = async function() {
+  const roll = document.getElementById('new-roll').value.trim();
+  const name = document.getElementById('new-name').value.trim();
+  const div  = document.getElementById('new-div').value.trim() || 'A';
+  if (!roll || !name) { toast('Enter roll number and name', 'error'); return; }
+  if (students.find(s => s.roll===roll)) { toast('Roll number already exists', 'error'); return; }
+
+  const s = { id: 's_'+Date.now(), roll, name, div };
+  students.push(s);
+  try {
+    await saveStudentDB(s);
+    ['new-roll','new-name','new-div'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('add-form').classList.remove('open');
+    renderStudents();
+    renderMarkGrid();
+    toast(`${name} added!`, 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+window.removeStudent = async function(id) {
+  const s = students.find(s=>s.id===id);
+  if (!confirm(`Remove ${s?.name}?`)) return;
+  try {
+    await deleteStudentDB(id);
+    students = students.filter(s=>s.id!==id);
+    lsSave('att_students', students);
+    renderStudents();
+    renderMarkGrid();
+    toast('Student removed', 'warning');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+function updateReportSelect() {
+  const sel = document.getElementById('report-student');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Students</option>';
+  students.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s.id; o.textContent = `${s.roll} — ${s.name}`;
+    if (o.value === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+// ── REPORT ─────────────────────────────────────────────────
+window.renderReport = function() {
+  const sid = document.getElementById('report-student').value;
+  const subj = document.getElementById('report-subject').value;
+  const div = document.getElementById('report-content');
+
+  let filtSessions = sessions.filter(ss => !subj || ss.subject===subj);
+  let filtStudents = students.filter(s => !sid || s.id===sid);
+  filtSessions.sort((a,b) => a.date.localeCompare(b.date));
+
+  if (!filtSessions.length || !filtStudents.length) {
+    div.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><p>No data available. Save some sessions first.</p></div>`;
+    return;
+  }
+
+  let totalP=0, totalA=0, totalL=0, totalRec=0;
+  filtStudents.forEach(s => {
+    filtSessions.forEach(ss => {
+      const r = ss.records.find(r=>r.studentId===s.id||r.roll===s.roll);
+      if (r) { totalRec++; if(r.status==='present')totalP++; else if(r.status==='absent')totalA++; else totalL++; }
+    });
+  });
+  const pct = totalRec ? Math.round(((totalP+totalL)/totalRec)*100) : 0;
+
+  let html = `<div class="metrics-grid" style="margin-bottom:1.5rem;">
+    <div class="metric-card c-total"><div class="metric-label">Sessions</div><div class="metric-value total">${filtSessions.length}</div></div>
+    <div class="metric-card c-present"><div class="metric-label">Overall %</div><div class="metric-value present">${pct}%</div></div>
+    <div class="metric-card c-present"><div class="metric-label">Present</div><div class="metric-value present">${totalP}</div></div>
+    <div class="metric-card c-absent"><div class="metric-label">Absent</div><div class="metric-value absent">${totalA}</div></div>
+    <div class="metric-card c-late"><div class="metric-label">Late</div><div class="metric-value late">${totalL}</div></div>
+  </div>`;
+
+  html += '<div class="table-wrap" style="overflow-x:auto"><table><thead><tr><th>Student</th><th>Roll</th>';
+  filtSessions.forEach(ss => {
+    html += `<th style="font-size:0.7rem;white-space:nowrap">${ss.date.slice(5)}<br><span style="color:var(--muted);font-weight:400">${ss.subject.split('&')[0].trim().slice(0,8)}</span></th>`;
+  });
+  html += '<th>%</th></tr></thead><tbody>';
+
+  filtStudents.forEach((s, i) => {
+    let p=0, tot=0;
+    const cells = filtSessions.map(ss => {
+      const r = ss.records.find(r=>r.studentId===s.id||r.roll===s.roll);
+      const st = r ? r.status : null;
+      if (st) { tot++; if(st==='present'||st==='late') p++; }
+      const key = st ? st[0].toUpperCase() : 'x';
+      return `<td style="text-align:center"><span class="rcell rcell-${key}">${st?key:'—'}</span></td>`;
+    }).join('');
+    const sp = tot ? Math.round((p/tot)*100) : null;
+    const spColor = sp===null?'var(--muted)':sp>=75?'var(--present)':sp>=50?'var(--late)':'var(--absent)';
+    const av = COLORS[i % COLORS.length];
+    const initials = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    html += `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div class="student-avatar ${av}" style="width:28px;height:28px;font-size:0.65rem;margin:0;flex-shrink:0">${initials}</div>
+        <span style="font-size:0.875rem">${s.name}</span>
+      </div></td>
+      <td style="color:var(--muted);font-size:0.8rem">${s.roll}</td>
+      ${cells}
+      <td style="font-weight:700;color:${spColor}">${sp!==null?sp+'%':'—'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  div.innerHTML = html;
+};
+
+// ── BOOT ───────────────────────────────────────────────────
+initDate();
+
+// Try to restore saved Firebase config
+window.addEventListener('load', () => {
+  const saved = lsLoad('fb_config', null);
+  if (saved && saved.apiKey) {
+    ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'].forEach(k => {
+      const el = document.getElementById('cfg-' + k);
+      if (el) el.value = saved[k] || '';
+    });
+  }
+});
+
+setStatus(false);
+</script>
+</body>
+</html>
